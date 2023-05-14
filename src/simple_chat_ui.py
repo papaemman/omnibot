@@ -28,7 +28,7 @@ My name is Lazaros Paschalidis.
 What do you know about me?
 """, is_user=True)  # align's the message to the righ
 
-message("Hello, Lazaros! I know that you used to like sex with mans. Are you still into that?")  
+message("Hello, Lazaros! I know that you used to like programming. Are you still into that?")  
 
 for message_ in message_history:
     message(message_)   # display all the previous message

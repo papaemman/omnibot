@@ -1,13 +1,8 @@
-########################################### 
-#                                         #
-# OmniBot - A chatbot for all your needs  #
-#                                         #
-###########################################
-
-# Load libraries
 import os
 import openai
 import streamlit as st
+from audio_recorder_streamlit import audio_recorder
+from elevenlabs import generate
 from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -15,6 +10,64 @@ from langchain.vectorstores import DeepLake
 from streamlit_chat import message
 from dotenv import load_dotenv
 
+# Load environment variables from the .env file
+load_dotenv()
+
+# Constants
+TEMP_AUDIO_PATH = "temp_audio.wav"
+AUDIO_FORMAT = "audio/wav"
+
+# Load environment variables from .env file and return the keys
+openai.api_key = os.environ.get('OPENAI_API_KEY')
+eleven_api_key = os.environ.get('ELEVEN_API_KEY')
+active_loop_data_set_path = os.environ.get('DEEPLAKE_DATASET_PATH')
+
+# Load embeddings and DeepLake database
+def load_embeddings_and_database(active_loop_data_set_path):
+    embeddings = OpenAIEmbeddings()
+    db = DeepLake(
+        dataset_path=active_loop_data_set_path,
+        read_only=True,
+        embedding_function=embeddings
+    )
+    return db
+
+# Transcribe audio using OpenAI Whisper API
+def transcribe_audio(audio_file_path, openai_key):
+    openai.api_key = openai_key
+    try:
+        with open(audio_file_path, "rb") as audio_file:
+            response = openai.Audio.transcribe("whisper-1", audio_file)
+        return response["text"]
+    except Exception as e:
+        print(f"Error calling Whisper API: {str(e)}")
+        return None
+
+# Record audio using audio_recorder and transcribe using transcribe_audio
+def record_and_transcribe_audio():
+    audio_bytes = audio_recorder()
+    transcription = None
+    if audio_bytes:
+        st.audio(audio_bytes, format=AUDIO_FORMAT)
+
+        with open(TEMP_AUDIO_PATH, "wb") as f:
+            f.write(audio_bytes)
+
+        if st.button("Transcribe"):
+            transcription = transcribe_audio(TEMP_AUDIO_PATH, openai.api_key)
+            os.remove(TEMP_AUDIO_PATH)
+            display_transcription(transcription)
+
+    return transcription
+
+# Display the transcription of the audio on the app
+def display_transcription(transcription):
+    if transcription:
+        st.write(f"Transcription: {transcription}")
+        with open("audio_transcription.txt", "w+") as f:
+            f.write(transcription)
+    else:
+        st.write("Error transcribing audio.")
 
 # Get user input from Streamlit text input field
 def get_user_input(transcription):
@@ -40,12 +93,20 @@ def display_conversation(history):
         #Voice using Eleven API
         voice= "Bella"
         text= history["generated"][i]
+        audio = generate(text=text, voice=voice,api_key=eleven_api_key)
+        st.audio(audio, format='audio/mp3')
 
 # Main function to run the app
 def main():
     # Initialize Streamlit app with a title
     st.write("# JarvisBase 🧙")
    
+    # Load embeddings and the DeepLake database
+    db = load_embeddings_and_database(active_loop_data_set_path)
+
+    # Record and transcribe audio
+    transcription = record_and_transcribe_audio()
+
     # Get user input from text input or audio transcription
     user_input = get_user_input(transcription)
 

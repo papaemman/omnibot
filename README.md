@@ -21,6 +21,13 @@ OmniBot can be trained to perform a variety of tasks, including:
 - Answering questions about the company, its products, services, and policies
 - Providing information about the company's internal processes and procedures
 
+## Sample questions
+
+1. Hello, who are you?
+2. Τι είναι το ίδρυμα Αθανάσιος Κ. Λασκαρίδης?
+3. Με ποιους φορείς συνεργάζεται το ίδρυμα?
+4. Ποιες ομάδες διακρίθηκαν στον Μαραθώνιο καινοτομίας 2022?
+
 ---
 
 ## How to run it?
@@ -29,3 +36,7 @@ OmniBot can be trained to perform a variety of tasks, including:
 > poetry install
 > poetry run streamlit run src/app.py 
 ```
+
+## TODO
+
+- Change order to Chat messages, inbox, Button
